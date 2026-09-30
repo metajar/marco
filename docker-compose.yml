@@ -17,19 +17,3 @@ services:
       # ../files is Dokploy's persistent per-app directory.
       - ../files/marco-data:/data
 
-  # Bridge from Dokploy's Traefik to marco on the host network.
-  # In Dokploy, add the domain to this service on port 80.
-  proxy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    command: caddy reverse-proxy --from :80 --to host.docker.internal:${MARCO_PORT:-9999}
-    extra_hosts:
-      - host.docker.internal:host-gateway
-    depends_on:
-      - marco
-    networks:
-      - dokploy-network
-
-networks:
-  dokploy-network:
-    external: true
