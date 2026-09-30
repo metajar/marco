@@ -65,11 +65,15 @@ A phone that's switched off or has a dead battery looks the same as one with Wi-
 
 **Docker (Linux host):**
 
-```sh
-docker compose up -d --build   # edit TZ in docker-compose.yml first
-```
+`docker-compose.yml` is set up for [Dokploy](https://dokploy.com): create a Compose app from this repo,
+set `TZ` (and optionally `MARCO_PORT`, default 9999) under Environment, then add your domain to the
+`proxy` service on port 80.
 
-Host networking is required so the container can see the LAN.
+Host networking is required so the container can see the LAN, so marco can't join Dokploy's network
+directly. The small Caddy `proxy` service sits on `dokploy-network` and forwards to marco on the host.
+Data lives in Dokploy's persistent `../files/marco-data`.
+
+Outside Dokploy, run `docker network create dokploy-network` once, then `docker compose up -d --build`.
 
 **Raspberry Pi / systemd:**
 

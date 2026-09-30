@@ -1,15 +1,35 @@
 services:
   marco:
     build: .
-    container_name: marco
     restart: unless-stopped
     # Host networking is required: marco has to see the LAN and its ARP table.
+    # That also means it can't join dokploy-network, so Traefik reaches it
+    # through the `proxy` service below.
     network_mode: host
     cap_add:
       - NET_ADMIN # refresh ARP entries so sleeping phones are detected accurately
       - NET_RAW   # ICMP ping
     environment:
-      - TZ=America/Denver # change to your timezone
-      - MARCO_ADDR=:9999
+      - TZ=${TZ:-America/Denver}
+      - MARCO_ADDR=:${MARCO_PORT:-9999}
     volumes:
-      - ./data:/data
+      # Dokploy re-clones the repo on every deploy, so ./data would be wiped.
+      # ../files is Dokploy's persistent per-app directory.
+      - ../files/marco-data:/data
+
+  # Bridge from Dokploy's Traefik to marco on the host network.
+  # In Dokploy, add the domain to this service on port 80.
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    command: caddy reverse-proxy --from :80 --to host.docker.internal:${MARCO_PORT:-9999}
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    depends_on:
+      - marco
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
