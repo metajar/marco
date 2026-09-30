@@ -10,6 +10,6 @@ services:
       - NET_RAW   # ICMP ping
     environment:
       - TZ=America/Denver # change to your timezone
-      - MARCO_ADDR=:9876
+      - MARCO_ADDR=:9999
     volumes:
       - ./data:/data
