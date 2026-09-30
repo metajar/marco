@@ -9,7 +9,7 @@ services:
       - NET_ADMIN # refresh ARP entries so sleeping phones are detected accurately
       - NET_RAW   # ICMP ping
     environment:
-      - TZ=America/Chicago # change to your timezone
-      - MARCO_ADDR=:8080
+      - TZ=America/Denver # change to your timezone
+      - MARCO_ADDR=:9876
     volumes:
       - ./data:/data
