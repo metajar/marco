@@ -1,0 +1,61 @@
+{{define "content"}}
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row align-items-center g-3">
+      <div class="col-auto"><span class="avatar avatar-lg bg-primary-lt"><i class="ti ti-radar fs-1"></i></span></div>
+      <div class="col">
+        <h3 class="mb-1">Scan the home network</h3>
+        <div class="text-secondary">
+          Marco will knock on every address in
+          {{range $i, $s := .D.Subnets}}{{if $i}}, {{end}}<code>{{$s}}</code>{{else}}<em>no network found</em>{{end}}
+          and list what answers. Make sure the kid's phone is awake and on Wi-Fi first.
+        </div>
+      </div>
+      <div class="col-auto">
+        <form method="post" action="/discover" id="scan-form">
+          <button class="btn btn-primary" id="scan-btn"><i class="ti ti-radar me-1"></i>{{if .D.Scanned}}Scan again{{else}}Scan now{{end}}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-info">
+  <div class="d-flex">
+    <i class="ti ti-bulb fs-2 me-2"></i>
+    <div>
+      <strong>Finding the right phone:</strong> on an iPhone open <em>Settings → Wi-Fi → ⓘ</em> next to your network; on Android open <em>Settings → Network → Wi-Fi → your network</em>. Match the IP or the "Wi-Fi address" (MAC) below.
+      Phones use a <span class="badge bg-azure-lt">private</span> MAC per network — that's fine, it stays the same unless the setting is changed to "Rotating".
+    </div>
+  </div>
+</div>
+
+{{if .D.Scanned}}
+<div class="card">
+  <div class="card-header"><h3 class="card-title">{{len .D.Rows}} devices answered</h3></div>
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead><tr><th>IP address</th><th>Name</th><th>MAC address</th><th></th></tr></thead>
+      <tbody>
+      {{range .D.Rows}}
+      <tr>
+        <td class="font-monospace">{{.IP}}</td>
+        <td>{{if .Hostname}}{{.Hostname}}{{else}}<span class="text-secondary">unknown</span>{{end}}</td>
+        <td class="font-monospace">{{.MAC}}{{if .PrivateMAC}} <span class="badge bg-azure-lt" title="Randomized MAC — usually a phone, tablet or watch">private</span>{{end}}</td>
+        <td class="text-end">
+          {{with .Known}}
+          <a href="/devices/{{.ID}}" class="btn btn-sm btn-ghost-success"><i class="ti {{kindIcon .Kind}} me-1"></i>{{.Name}}</a>
+          {{else}}
+          <a href="/devices/new?ip={{.IP}}&amp;mac={{.MAC}}&amp;name={{.Hostname}}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>Add</a>
+          {{end}}
+        </td>
+      </tr>
+      {{else}}
+      <tr><td colspan="4" class="text-secondary">Nothing answered. Is Marco running on a computer that's on the same network?</td></tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,160 @@
+{{define "title"}}<span class="d-inline-flex align-items-center">{{template "person-avatar" .D.Person}}<span class="ms-2">{{.D.Person.Name}}</span></span>{{end}}
+
+{{define "actions"}}
+<div class="btn-list">
+  {{template "pause-menu" (dict "Person" .D.Person "Paused" .D.Paused "Back" "")}}
+  <a href="/devices/new?person={{.D.Person.ID}}" class="btn btn-primary"><i class="ti ti-plus me-1"></i>Add device</a>
+</div>
+{{end}}
+
+{{define "content"}}
+{{$p := .D.Person}}
+<div class="mb-3">{{template "schedule-status" .D}}</div>
+
+<div class="row row-cards">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-devices me-2"></i>Devices</h3></div>
+      {{if .D.Devices}}
+      <div class="list-group list-group-flush">
+        {{range .D.Devices}}{{template "device-item" .}}{{end}}
+      </div>
+      {{else}}
+      <div class="card-body">
+        <p class="text-secondary">{{$p.Name}} doesn't have any devices yet.</p>
+        <a href="/devices/new?person={{$p.ID}}" class="btn btn-primary btn-sm"><i class="ti ti-plus me-1"></i>Add a device</a>
+        <a href="/discover" class="btn btn-sm"><i class="ti ti-radar me-1"></i>Find it on the network</a>
+      </div>
+      {{end}}
+    </div>
+
+    <div class="card mb-3" id="schedules">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title"><i class="ti ti-calendar-time me-2"></i>Watch schedules</h3>
+          <div class="card-subtitle">During these times Marco texts you if {{$p.Name}}'s devices leave the Wi-Fi.</div>
+        </div>
+      </div>
+      {{if $p.Schedules}}
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th>Name</th><th>Days</th><th>Time</th><th class="w-1"></th></tr></thead>
+          <tbody>
+          {{range $p.Schedules}}
+          <tr class="{{if not .Enabled}}text-secondary{{end}}">
+            <td>
+              {{if .Active $.Now}}<span class="status-dot status-dot-animated status-blue me-1" title="Active now"></span>{{end}}
+              {{.Name}}
+              {{if not .Enabled}}<span class="badge bg-secondary-lt ms-1">Off</span>{{end}}
+            </td>
+            <td>{{.DaysLabel}}</td>
+            <td class="text-nowrap">{{.TimeLabel}}{{if and .Overnight (ne .StartMin .EndMin)}} <span class="text-secondary small">(overnight)</span>{{end}}</td>
+            <td class="text-nowrap">
+              <form method="post" action="/schedules/{{.ID}}/toggle" class="d-inline">
+                <button class="btn btn-sm btn-ghost-secondary" title="{{if .Enabled}}Turn off{{else}}Turn on{{end}}"><i class="ti {{if .Enabled}}ti-toggle-right text-primary{{else}}ti-toggle-left{{end}} fs-2"></i></button>
+              </form>
+              <form method="post" action="/schedules/{{.ID}}/delete" class="d-inline" data-confirm="Delete the &quot;{{.Name}}&quot; schedule?">
+                <button class="btn btn-sm btn-ghost-danger" title="Delete"><i class="ti ti-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+      {{end}}
+      <div class="card-body border-top">
+        <form method="post" action="/people/{{$p.ID}}/schedules" id="schedule-form">
+          <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <span class="text-secondary small me-1">Quick presets:</span>
+            <button type="button" class="btn btn-sm" data-preset='{"name":"School nights","days":[0,1,2,3,4],"start":"21:00","end":"07:00"}'>School nights</button>
+            <button type="button" class="btn btn-sm" data-preset='{"name":"Weekend nights","days":[5,6],"start":"23:00","end":"08:00"}'>Weekend nights</button>
+            <button type="button" class="btn btn-sm" data-preset='{"name":"Homework time","days":[1,2,3,4,5],"start":"16:00","end":"18:00"}'>Homework</button>
+            <button type="button" class="btn btn-sm" data-preset='{"name":"Always","days":[0,1,2,3,4,5,6],"start":"00:00","end":"00:00"}'>Always</button>
+          </div>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label" for="sched-name">Name</label>
+              <input id="sched-name" name="name" class="form-control" placeholder="e.g. School nights">
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="sched-start">From</label>
+              <input id="sched-start" name="start" type="time" class="form-control" value="21:00" required>
+            </div>
+            <div class="col-6 col-md-4">
+              <label class="form-label" for="sched-end">Until</label>
+              <input id="sched-end" name="end" type="time" class="form-control" value="07:00" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Days (the day the window starts)</label>
+              <div class="form-selectgroup">
+                {{range weekdays}}
+                <label class="form-selectgroup-item">
+                  <input type="checkbox" name="days" value="{{.Bit}}" class="form-selectgroup-input" {{if and (ge .Bit 0) (le .Bit 4)}}checked{{end}}>
+                  <span class="form-selectgroup-label">{{.Short}}</span>
+                </label>
+                {{end}}
+              </div>
+              <div class="form-hint">If "Until" is earlier than "From", the window runs overnight. Same time for both means all day.</div>
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3"><i class="ti ti-plus me-1"></i>Add schedule</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card mb-3">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-timeline me-2"></i>Last 7 days</h3></div>
+      <div class="card-body">
+        {{if .D.Devices}}
+        <div id="timeline" data-rows="{{len .D.Devices}}"></div>
+        {{template "chart-legend-help" true}}
+        {{else}}<div class="text-secondary">Add a device to see history.</div>{{end}}
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-activity me-2"></i>Recent activity</h3>
+        <div class="card-actions"><a href="/activity?person={{$p.ID}}" class="btn btn-sm">View all</a></div>
+      </div>
+      {{template "events" .D.Events}}
+    </div>
+    {{if $p.CanText}}
+    <div class="card mb-3">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-message-user me-2"></i>What {{$p.Name}} gets</h3>
+      </div>
+      <div class="card-body">
+        <div class="text-secondary small mb-2">Sent to {{$p.Phone}} when their device drops off during a schedule:</div>
+        <div class="p-3 rounded bg-purple-lt">{{.D.KidPreview}}</div>
+      </div>
+      <div class="card-footer">
+        <form method="post" action="/people/{{$p.ID}}/test-text" data-confirm="Send a test text to {{$p.Name}} at {{$p.Phone}}?">
+          <button class="btn btn-sm"><i class="ti ti-send me-1"></i>Send {{$p.Name}} a test text</button>
+        </form>
+      </div>
+    </div>
+    {{end}}
+    <form class="card mb-3" method="post" action="/people/{{$p.ID}}">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-user-edit me-2"></i>Details</h3></div>
+      <div class="card-body">{{template "person-fields" $p}}</div>
+      <div class="card-footer d-flex">
+        <button type="submit" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+    <form method="post" action="/people/{{$p.ID}}/delete" data-confirm="Remove {{$p.Name}}? Their schedules are deleted; their devices are kept but unassigned.">
+      <button class="btn btn-ghost-danger"><i class="ti ti-trash me-1"></i>Remove {{$p.Name}}</button>
+    </form>
+  </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+{{if .D.Devices}}
+<script>
+  Marco.timeline("#timeline", {{.D.Timeline}}, {{.D.From}}, {{.D.To}}, {{.D.Bands}});
+</script>
+{{end}}
+{{end}}

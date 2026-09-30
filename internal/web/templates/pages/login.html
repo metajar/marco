@@ -1,0 +1,18 @@
+{{define "content"}}
+<form class="card card-md" method="post" action="/login" autocomplete="on">
+  <div class="card-body">
+    <h2 class="h2 text-center mb-4">Sign in</h2>
+    <div class="mb-3">
+      <label class="form-label" for="username">Username</label>
+      <input id="username" name="username" type="text" class="form-control" autocomplete="username" autocapitalize="none" required autofocus value="{{with .D}}{{index . "Username"}}{{end}}">
+    </div>
+    <div class="mb-2">
+      <label class="form-label" for="password">Password</label>
+      <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" required>
+    </div>
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary w-100"><i class="ti ti-login me-1"></i>Sign in</button>
+    </div>
+  </div>
+</form>
+{{end}}

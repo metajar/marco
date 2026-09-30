@@ -1,0 +1,158 @@
+{{define "title"}}
+<span class="d-inline-flex align-items-center">
+  <span class="avatar bg-{{statusColor .D.Device.Status}}-lt me-2"><i class="ti {{kindIcon .D.Device.Kind}} fs-2"></i></span>
+  {{.D.Device.Name}}
+  <span class="ms-2 fs-5">{{if .D.Device.Monitored}}{{template "status" .D.Device.Status}}{{else}}<span class="badge bg-secondary-lt">Not monitored</span>{{end}}</span>
+</span>
+{{end}}
+
+{{define "actions"}}
+<div class="btn-list">
+  <form method="post" action="/check-now" class="d-inline">
+    <input type="hidden" name="back" value="/devices/{{.D.Device.ID}}">
+    <button class="btn"><i class="ti ti-refresh me-1"></i>Check now</button>
+  </form>
+  <a href="/devices/{{.D.Device.ID}}/edit" class="btn btn-primary"><i class="ti ti-edit me-1"></i>Edit</a>
+</div>
+{{end}}
+
+{{define "content"}}
+{{$d := .D.Device}}
+<div data-autorefresh="120"></div>
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="datagrid">
+      <div class="datagrid-item">
+        <div class="datagrid-title">Belongs to</div>
+        <div class="datagrid-content">
+          {{with .D.Person}}<a href="/people/{{.ID}}" class="text-reset"><span class="avatar avatar-xs bg-{{.Color}}-lt me-1">{{.Initials}}</span>{{.Name}}</a>{{else}}<span class="text-secondary">Nobody</span>{{end}}
+        </div>
+      </div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">IP address</div>
+        <div class="datagrid-content font-monospace">{{$d.IP}}</div>
+      </div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">MAC address</div>
+        <div class="datagrid-content font-monospace">
+          {{if $d.MAC}}{{$d.MAC}}{{if .D.Private}} <span class="badge bg-azure-lt" title="Randomized 'Private Wi-Fi Address'. It stays the same for your network unless the phone's setting is changed to Rotating.">private</span>{{end}}{{else}}<span class="text-secondary">not learned yet</span>{{end}}
+        </div>
+      </div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Last seen</div>
+        <div class="datagrid-content" title="{{stamp $d.LastSeen}}">{{ago $d.LastSeen}}{{with $d.LastMethod}} <span class="text-secondary">via {{.}}</span>{{end}}</div>
+      </div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Last checked</div>
+        <div class="datagrid-content" title="{{stamp $d.LastCheck}}">{{ago $d.LastCheck}}{{if $d.Misses}} <span class="text-danger">({{$d.Misses}} missed)</span>{{end}}</div>
+      </div>
+      <div class="datagrid-item">
+        <div class="datagrid-title">Alerts</div>
+        <div class="datagrid-content">
+          {{if not $d.Alerts}}<span class="text-secondary">Off for this device</span>
+          {{else if not .D.Person}}<span class="text-secondary">Assign an owner to get alerts</span>
+          {{else if $d.AlertActive}}<span class="text-orange"><i class="ti ti-message-exclamation me-1"></i>Texted {{ago $d.AlertedAt}}</span>
+          {{else}}<span class="text-green"><i class="ti ti-bell me-1"></i>On</span>{{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex align-items-center mb-2">
+  <h3 class="mb-0">History</h3>
+  <div class="btn-group ms-auto" role="group">
+    {{range .D.Ranges}}<a href="?range={{.Key}}" class="btn btn-sm {{if eq .Key $.D.Range}}active{{end}}">{{.Label}}</a>{{end}}
+  </div>
+</div>
+
+<div class="row row-cards mb-3">
+  <div class="col-6 col-lg-3">
+    <div class="card card-sm"><div class="card-body">
+      <div class="subheader">On Wi-Fi</div>
+      <div class="h1 mb-0">{{pct .D.Stats.OnlinePct}}</div>
+      <div class="small text-secondary">of tracked time</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card card-sm"><div class="card-body">
+      <div class="subheader">During schedules</div>
+      <div class="h1 mb-0">{{pct .D.Stats.ScheduledOnlinePct}}</div>
+      <div class="small text-secondary">on Wi-Fi when it should be</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card card-sm"><div class="card-body">
+      <div class="subheader">Off Wi-Fi in schedule</div>
+      <div class="h1 mb-0 {{if .D.Stats.OfflineScheduled}}text-red{{end}}">{{dur .D.Stats.OfflineScheduled}}</div>
+      <div class="small text-secondary">{{.D.Stats.Drops}} drop{{if ne .D.Stats.Drops 1}}s{{end}} total</div>
+    </div></div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card card-sm"><div class="card-body">
+      <div class="subheader">Alerts sent</div>
+      <div class="h1 mb-0">{{.D.Alerts}}</div>
+      <div class="small text-secondary">in this period</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-timeline me-2"></i>On and off the network</h3></div>
+  <div class="card-body">
+    <div id="timeline" data-rows="1"></div>
+    {{template "chart-legend-help" .D.Person}}
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header"><h3 class="card-title"><i class="ti ti-chart-bar me-2"></i>Hours per day (last 14 days)</h3></div>
+  <div class="card-body"><div id="daily"></div></div>
+</div>
+
+<div class="row row-cards">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-activity me-2"></i>Activity</h3>
+        <div class="card-actions"><a href="/activity?device={{$d.ID}}" class="btn btn-sm">View all</a></div>
+      </div>
+      {{template "events" .D.Events}}
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title"><i class="ti ti-list-check me-2"></i>Recent checks</h3>
+          <div class="card-subtitle">Raw results. A single miss is normal for a sleeping phone; it counts as offline after several in a row.</div>
+        </div>
+      </div>
+      <div class="table-responsive" style="max-height:28rem">
+        <table class="table table-sm table-vcenter card-table">
+          <thead><tr><th>Time</th><th>Result</th><th>How</th><th class="text-end">Latency</th></tr></thead>
+          <tbody>
+          {{range .D.Checks}}
+          <tr>
+            <td class="text-secondary" title="{{stamp .At}}">{{when .At}}</td>
+            <td>{{if .Online}}<span class="text-green"><i class="ti ti-check"></i> answered</span>{{else}}<span class="text-red"><i class="ti ti-x"></i> no answer</span>{{end}}</td>
+            <td class="font-monospace small">{{.Method}}</td>
+            <td class="text-end text-secondary">{{if .Online}}{{.LatencyMs}} ms{{end}}</td>
+          </tr>
+          {{else}}
+          <tr><td colspan="4" class="text-secondary">No checks yet.</td></tr>
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+  Marco.timeline("#timeline", {{.D.Timeline}}, {{.D.From}}, {{.D.To}}, {{.D.Bands}});
+  Marco.bars("#daily", {{.D.Daily}}, { stacked: true, unit: "h", colors: ["#2fb344", "#d63939", "#f59f00"] });
+</script>
+{{end}}

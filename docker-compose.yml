@@ -1,0 +1,15 @@
+services:
+  marco:
+    build: .
+    container_name: marco
+    restart: unless-stopped
+    # Host networking is required: marco has to see the LAN and its ARP table.
+    network_mode: host
+    cap_add:
+      - NET_ADMIN # refresh ARP entries so sleeping phones are detected accurately
+      - NET_RAW   # ICMP ping
+    environment:
+      - TZ=America/Chicago # change to your timezone
+      - MARCO_ADDR=:8080
+    volumes:
+      - ./data:/data

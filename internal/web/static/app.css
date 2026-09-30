@@ -1,0 +1,38 @@
+.marco-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #066fd1, #4299e1);
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.marco-logo-lg {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1rem;
+  font-size: 2.5rem;
+}
+
+.legend {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 2px;
+  vertical-align: -1px;
+}
+
+.card-watching {
+  box-shadow: 0 0 0 1px rgba(6, 111, 209, 0.25), var(--tblr-box-shadow-card, none);
+}
+
+.apexcharts-tooltip {
+  border-radius: 6px !important;
+}
+
+.datagrid {
+  --tblr-datagrid-item-width: 12rem;
+}

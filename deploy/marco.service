@@ -1,0 +1,14 @@
+[Unit]
+Description=Marco - family device presence monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/local/bin/marco -addr :8080 -db /var/lib/marco/marco.db
+StateDirectory=marco
+Restart=on-failure
+# Runs as root so it can refresh the ARP table and send raw ICMP.
+User=root
+
+[Install]
+WantedBy=multi-user.target

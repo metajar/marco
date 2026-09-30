@@ -1,0 +1,29 @@
+{{define "content"}}
+<form class="card card-md" method="post" action="/setup">
+  <div class="card-body">
+    <h2 class="card-title text-center mb-2">Create your parent account</h2>
+    <p class="text-secondary text-center mb-4">You can add your partner's account afterwards.</p>
+    <div class="mb-3">
+      <label class="form-label required" for="name">Your name</label>
+      <input id="name" name="name" class="form-control" placeholder="e.g. Jamie" required value="{{index .D "Name"}}" autofocus>
+    </div>
+    <div class="mb-3">
+      <label class="form-label required" for="username">Username</label>
+      <input id="username" name="username" class="form-control" autocapitalize="none" autocomplete="username" required value="{{index .D "Username"}}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label required" for="password">Password</label>
+      <input id="password" name="password" type="password" class="form-control" autocomplete="new-password" minlength="8" required>
+      <div class="form-hint">At least 8 characters.</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="phone">Mobile number for alerts</label>
+      <input id="phone" name="phone" type="tel" class="form-control" placeholder="+1 555 123 4567" value="{{index .D "Phone"}}">
+      <div class="form-hint">Marco texts this number when a kid's phone drops off Wi-Fi. Include the country code.</div>
+    </div>
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary w-100">Get started</button>
+    </div>
+  </div>
+</form>
+{{end}}

@@ -1,0 +1,160 @@
+{{define "status"}}<span class="badge bg-{{statusColor .}}-lt"><span class="status-dot status-{{statusColor .}}{{if eq . "online"}} status-dot-animated{{end}} me-1"></span>{{statusLabel .}}</span>{{end}}
+
+{{define "person-avatar"}}<span class="avatar bg-{{.Color}}-lt fw-bold">{{.Initials}}</span>{{end}}
+
+{{define "device-item"}}
+<div class="list-group-item">
+  <div class="row align-items-center g-3">
+    <div class="col-auto">
+      <span class="avatar bg-{{statusColor .Status}}-lt"><i class="ti {{kindIcon .Kind}} fs-2"></i></span>
+    </div>
+    <div class="col text-truncate">
+      <a href="/devices/{{.ID}}" class="text-reset d-block fw-medium">{{.Name}}</a>
+      <div class="small text-secondary text-truncate">
+        {{.IP}} ·
+        {{if not .Monitored}}not monitored
+        {{else if eq .Status "online"}}here {{ago .LastSeen}}
+        {{else if .LastSeen.IsZero}}not seen yet
+        {{else}}last seen {{ago .LastSeen}}{{end}}
+      </div>
+    </div>
+    <div class="col-auto text-end">
+      {{if .Monitored}}{{template "status" .Status}}{{else}}<span class="badge bg-secondary-lt">Off</span>{{end}}
+      {{if .AlertActive}}<div><span class="badge bg-orange-lt mt-1"><i class="ti ti-message-exclamation me-1"></i>Texted</span></div>{{end}}
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "events"}}
+{{if .}}
+<div class="list-group list-group-flush">
+  {{range .}}
+  <div class="list-group-item">
+    <div class="row g-3 align-items-center">
+      <div class="col-auto"><span class="avatar avatar-sm bg-{{eventColor .Kind}}-lt"><i class="ti {{eventIcon .Kind}}"></i></span></div>
+      <div class="col" style="min-width:0">
+        <div class="text-wrap">{{.Message}}</div>
+        <div class="small text-secondary mt-1" title="{{stamp .At}}">
+          {{when .At}}
+          {{if .PersonName}} · <a class="text-secondary" href="/people/{{.PersonID}}">{{.PersonName}}</a>{{end}}
+          {{if .DeviceName}} · <a class="text-secondary" href="/devices/{{.DeviceID}}"><i class="ti {{kindIcon .DeviceKind}}"></i> {{.DeviceName}}</a>{{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+  {{end}}
+</div>
+{{else}}
+<div class="card-body text-secondary"><i class="ti ti-mood-empty me-1"></i>Nothing here yet.</div>
+{{end}}
+{{end}}
+
+{{define "pause-menu"}}
+<div class="dropdown">
+  <a href="#" class="btn btn-sm {{if .Paused}}btn-warning{{else}}btn-outline-secondary{{end}}" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="ti {{if .Paused}}ti-bell-off{{else}}ti-bell{{end}} me-1"></i>{{if .Paused}}Paused{{else}}Alerts on{{end}}
+  </a>
+  <div class="dropdown-menu dropdown-menu-end">
+    <form method="post" action="/people/{{.Person.ID}}/pause">
+      <input type="hidden" name="back" value="{{.Back}}">
+      {{if .Paused}}
+      <span class="dropdown-header">Paused until {{when .Person.PausedUntil}}</span>
+      <button class="dropdown-item" name="minutes" value="0"><i class="ti ti-player-play me-2"></i>Resume alerts now</button>
+      <div class="dropdown-divider"></div>
+      {{end}}
+      <span class="dropdown-header">Pause alerts for {{.Person.Name}}</span>
+      <button class="dropdown-item" name="minutes" value="60"><i class="ti ti-clock me-2"></i>1 hour</button>
+      <button class="dropdown-item" name="minutes" value="180"><i class="ti ti-clock me-2"></i>3 hours</button>
+      <button class="dropdown-item" name="minutes" value="1"><i class="ti ti-moon-stars me-2"></i>Rest of this schedule (e.g. sleepover)</button>
+      <button class="dropdown-item" name="minutes" value="1440"><i class="ti ti-calendar me-2"></i>24 hours</button>
+      <button class="dropdown-item" name="minutes" value="10080"><i class="ti ti-plane me-2"></i>1 week (vacation)</button>
+    </form>
+  </div>
+</div>
+{{end}}
+
+{{define "schedule-status"}}
+{{if .Paused}}<span class="text-warning"><i class="ti ti-bell-off me-1"></i>Alerts paused until {{when .Person.PausedUntil}}</span>
+{{else if .Active}}<span class="text-primary"><i class="ti ti-shield-check me-1"></i>Watching until {{when .ActiveUntil}}</span>
+{{else if not .NextStart.IsZero}}<span class="text-secondary"><i class="ti ti-calendar-time me-1"></i>Next watch {{when .NextStart}}</span>
+{{else}}<span class="text-secondary"><i class="ti ti-calendar-off me-1"></i>No schedule set</span>{{end}}
+{{end}}
+
+{{define "chart-legend-help"}}
+<div class="small text-secondary mt-2">
+  <span class="legend me-1" style="background:var(--tblr-green)"></span>On Wi-Fi
+  <span class="legend ms-3 me-1" style="background:var(--tblr-red)"></span>Off Wi-Fi
+  <span class="legend ms-3 me-1" style="background:var(--tblr-gray-400)"></span>Not tracked
+  {{if .}}<span class="legend ms-3 me-1" style="background:rgba(66,153,225,.25)"></span>Scheduled watch time{{end}}
+</div>
+{{end}}
+
+{{define "person-fields"}}
+<div class="mb-3">
+  <label class="form-label required" for="name">Name</label>
+  <input id="name" name="name" class="form-control" placeholder="e.g. Emma" value="{{.Name}}" required autofocus>
+</div>
+<div class="mb-3">
+  <label class="form-label">Color</label>
+  <div class="row g-2">
+    {{$cur := .Color}}
+    {{range colors}}
+    <div class="col-auto">
+      <label class="form-colorinput">
+        <input name="color" type="radio" value="{{.}}" class="form-colorinput-input" {{if eq . $cur}}checked{{end}}>
+        <span class="form-colorinput-color bg-{{.}}"></span>
+      </label>
+    </div>
+    {{end}}
+  </div>
+</div>
+<div class="mb-3">
+  <label class="form-label" for="notes">Notes</label>
+  <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="Optional">{{.Notes}}</textarea>
+</div>
+<fieldset class="form-fieldset mb-0" id="texting">
+  <label class="form-check form-switch mb-2">
+    <input class="form-check-input" type="checkbox" name="text_kid" value="1" {{if .TextKid}}checked{{end}}
+      data-bs-toggle="collapse" data-bs-target="#kid-texting">
+    <span class="form-check-label">Text {{if .Name}}{{.Name}}{{else}}them{{end}} when they go offline</span>
+    <span class="form-check-description">They get one text each time their device drops off the Wi-Fi during a schedule. It reaches them over cellular.</span>
+  </label>
+  <div class="collapse{{if .TextKid}} show{{end}}" id="kid-texting">
+    <div class="mb-3">
+      <label class="form-label" for="kid-phone">Their mobile number</label>
+      <input id="kid-phone" name="phone" type="tel" class="form-control" value="{{.Phone}}" placeholder="+1 555 123 4567">
+    </div>
+    <div>
+      <label class="form-label" for="kid-template">Message</label>
+      <textarea id="kid-template" name="kid_template" class="form-control" rows="3" placeholder="{{kidDefault}}">{{.KidTemplate}}</textarea>
+      <div class="form-hint">Leave blank to use the default from Settings. Placeholders: <code>{person}</code> <code>{device}</code> <code>{since}</code> <code>{duration}</code> <code>{schedule}</code></div>
+    </div>
+  </div>
+</fieldset>
+{{end}}
+
+{{define "parent-fields"}}
+{{$a := .Admin}}
+<div class="mb-3">
+  <label class="form-label required">Name</label>
+  <input name="name" class="form-control" required value="{{with $a}}{{.Name}}{{end}}" placeholder="e.g. Sam">
+</div>
+<div class="mb-3">
+  <label class="form-label required">Username</label>
+  <input name="username" class="form-control" autocapitalize="none" autocomplete="off" required value="{{with $a}}{{.Username}}{{end}}">
+</div>
+<div class="mb-3">
+  <label class="form-label{{if .New}} required{{end}}">{{if .New}}Password{{else}}New password{{end}}</label>
+  <input name="password" type="password" class="form-control" autocomplete="new-password" minlength="8" {{if .New}}required{{end}} placeholder="{{if not .New}}Leave blank to keep the current one{{end}}">
+</div>
+<div class="mb-3">
+  <label class="form-label">Mobile number</label>
+  <input name="phone" type="tel" class="form-control" value="{{with $a}}{{.Phone}}{{end}}" placeholder="+1 555 123 4567">
+  <div class="form-hint">Include the country code, e.g. +1 for the US.</div>
+</div>
+<label class="form-check form-switch mb-0">
+  <input class="form-check-input" type="checkbox" name="notify" value="1" {{if or .New (and $a $a.Notify)}}checked{{end}}>
+  <span class="form-check-label">Text me alerts</span>
+</label>
+{{end}}

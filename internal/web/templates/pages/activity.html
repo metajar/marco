@@ -1,0 +1,89 @@
+{{define "content"}}
+{{$f := .D.Filter}}
+<form class="card mb-3" method="get" action="/activity">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-sm-6 col-lg-3">
+        <label class="form-label" for="f-person">Person</label>
+        <select id="f-person" name="person" class="form-select" onchange="this.form.submit()">
+          <option value="">Everyone</option>
+          {{range .D.People}}<option value="{{.ID}}" {{if eq .ID $f.PersonID}}selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <label class="form-label" for="f-device">Device</label>
+        <select id="f-device" name="device" class="form-select" onchange="this.form.submit()">
+          <option value="">All devices</option>
+          {{range .D.Devices}}<option value="{{.ID}}" {{if eq .ID $f.DeviceID}}selected{{end}}>{{.Name}}</option>{{end}}
+        </select>
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <label class="form-label" for="f-kind">Type</label>
+        <select id="f-kind" name="kind" class="form-select" onchange="this.form.submit()">
+          <option value="">Everything</option>
+          {{range .D.Kinds}}<option value="{{.Value}}" {{if eq .Value $f.Kind}}selected{{end}}>{{.Label}}</option>{{end}}
+        </select>
+      </div>
+      <input type="hidden" name="range" value="{{.D.Range}}">
+      <div class="col-sm-6 col-lg-3 d-flex gap-2">
+        <noscript><button class="btn btn-primary">Filter</button></noscript>
+        {{if .D.Filtered}}<a href="/activity?range={{.D.Range}}" class="btn btn-ghost-secondary"><i class="ti ti-x me-1"></i>Clear filters</a>{{end}}
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="d-flex align-items-center mb-2">
+  <h3 class="mb-0">On and off the network</h3>
+  <div class="btn-group ms-auto" role="group">
+    {{range .D.Ranges}}<a href="{{.URL}}" class="btn btn-sm {{if eq .Key $.D.Range}}active{{end}}">{{.Label}}</a>{{end}}
+  </div>
+</div>
+
+<div class="row row-cards mb-3">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-body">
+        {{if .D.RowCount}}
+        <div id="timeline" data-rows="{{.D.RowCount}}"></div>
+        {{template "chart-legend-help" false}}
+        {{else}}<div class="text-secondary">No monitored devices match.</div>{{end}}
+      </div>
+    </div>
+  </div>
+  {{if .D.RowCount}}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title"><i class="ti ti-wifi-off me-2"></i>Hours off Wi-Fi per day</h3></div>
+      <div class="card-body"><div id="offline"></div></div>
+    </div>
+  </div>
+  {{end}}
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">Log</h3>
+    <div class="card-actions text-secondary small">{{.D.Total}} entr{{if eq .D.Total 1}}y{{else}}ies{{end}}</div>
+  </div>
+  {{template "events" .D.Events}}
+  {{if gt .D.Pages 1}}
+  <div class="card-footer d-flex align-items-center">
+    <p class="m-0 text-secondary">Page {{.D.Page}} of {{.D.Pages}}</p>
+    <ul class="pagination m-0 ms-auto">
+      <li class="page-item {{if not .D.PrevURL}}disabled{{end}}"><a class="page-link" href="{{.D.PrevURL}}"><i class="ti ti-chevron-left"></i> Newer</a></li>
+      <li class="page-item {{if not .D.NextURL}}disabled{{end}}"><a class="page-link" href="{{.D.NextURL}}">Older <i class="ti ti-chevron-right"></i></a></li>
+    </ul>
+  </div>
+  {{end}}
+</div>
+{{end}}
+
+{{define "scripts"}}
+{{if .D.RowCount}}
+<script>
+  Marco.timeline("#timeline", {{.D.Timeline}}, {{.D.From}}, {{.D.To}}, []);
+  Marco.bars("#offline", {{.D.Offline}}, { stacked: true, unit: "h" });
+</script>
+{{end}}
+{{end}}

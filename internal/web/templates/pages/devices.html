@@ -1,0 +1,55 @@
+{{define "actions"}}
+<div class="btn-list">
+  <a href="/discover" class="btn"><i class="ti ti-radar me-1"></i>Find devices</a>
+  <a href="/devices/new" class="btn btn-primary"><i class="ti ti-plus me-1"></i>Add device</a>
+</div>
+{{end}}
+
+{{define "content"}}
+{{if not .D.Devices}}
+<div class="empty">
+  <div class="empty-icon"><i class="ti ti-device-mobile-question" style="font-size:4rem"></i></div>
+  <p class="empty-title">No devices yet</p>
+  <p class="empty-subtitle text-secondary">Scan the network to find your kids' phones, or add one by IP address.</p>
+  <div class="empty-action btn-list justify-content-center">
+    <a href="/discover" class="btn"><i class="ti ti-radar me-1"></i>Find devices</a>
+    <a href="/devices/new" class="btn btn-primary"><i class="ti ti-plus me-1"></i>Add device</a>
+  </div>
+</div>
+{{else}}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-vcenter card-table table-hover">
+      <thead>
+        <tr><th>Device</th><th>Belongs to</th><th>Address</th><th>Status</th><th>Last seen</th><th>Alerts</th><th class="w-1"></th></tr>
+      </thead>
+      <tbody>
+      {{$people := .D.People}}
+      {{range .D.Devices}}
+      <tr>
+        <td>
+          <div class="d-flex align-items-center">
+            <span class="avatar avatar-sm bg-{{statusColor .Status}}-lt me-2"><i class="ti {{kindIcon .Kind}}"></i></span>
+            <a href="/devices/{{.ID}}" class="text-reset fw-medium">{{.Name}}</a>
+          </div>
+        </td>
+        <td>
+          {{with index $people .PersonID}}<a href="/people/{{.ID}}" class="text-reset"><span class="avatar avatar-xs bg-{{.Color}}-lt me-1">{{.Initials}}</span>{{.Name}}</a>
+          {{else}}<span class="text-secondary">—</span>{{end}}
+        </td>
+        <td>
+          <div class="font-monospace">{{.IP}}</div>
+          {{if .MAC}}<div class="small text-secondary font-monospace">{{.MAC}}</div>{{end}}
+        </td>
+        <td>{{if .Monitored}}{{template "status" .Status}}{{else}}<span class="badge bg-secondary-lt">Not monitored</span>{{end}}</td>
+        <td class="text-secondary" title="{{stamp .LastSeen}}">{{ago .LastSeen}}{{with .LastMethod}}<div class="small">via {{.}}</div>{{end}}</td>
+        <td>{{if and .Alerts .PersonID}}<i class="ti ti-bell text-primary" title="Alerts on"></i>{{else}}<i class="ti ti-bell-off text-secondary" title="No alerts"></i>{{end}}</td>
+        <td><a href="/devices/{{.ID}}/edit" class="btn btn-sm btn-ghost-secondary" title="Edit"><i class="ti ti-edit"></i></a></td>
+      </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,133 @@
+{{define "actions"}}
+<div class="btn-list">
+  <a href="/people/new" class="btn d-none d-sm-inline-flex"><i class="ti ti-user-plus me-1"></i>Add family member</a>
+  <a href="/devices/new" class="btn btn-primary"><i class="ti ti-plus me-1"></i>Add device</a>
+</div>
+{{end}}
+
+{{define "content"}}
+<div data-autorefresh="{{.D.Interval}}"></div>
+{{if .D.NoTexts}}
+<div class="alert alert-warning" role="alert">
+  <div class="d-flex">
+    <i class="ti ti-message-off fs-2 me-2"></i>
+    <div>
+      <h4 class="alert-title">Text alerts aren't set up yet</h4>
+      <div class="text-secondary">Marco is watching, but it can't tell you anything. <a href="/settings#alerts">Add your Textbelt key</a> and make sure each parent has a mobile number.</div>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{if not .D.Cards}}
+<div class="empty">
+  <div class="empty-icon"><i class="ti ti-users-group" style="font-size:4rem"></i></div>
+  <p class="empty-title">Who should Marco keep an eye on?</p>
+  <p class="empty-subtitle text-secondary">Add each kid, give them a schedule (like school nights 9 PM – 7 AM), then add their phone. Marco texts you if the phone drops off the home Wi-Fi during the schedule.</p>
+  <div class="empty-action"><a href="/people/new" class="btn btn-primary"><i class="ti ti-user-plus me-1"></i>Add a family member</a></div>
+</div>
+{{else}}
+
+<div class="row row-cards mb-3">
+  {{template "stat" (dict "Color" "green" "Icon" "ti-wifi" "Value" .D.Stats.Online "Label" "On Wi-Fi now")}}
+  {{template "stat" (dict "Color" "red" "Icon" "ti-wifi-off" "Value" .D.Stats.Offline "Label" "Off Wi-Fi now")}}
+  {{template "stat" (dict "Color" "orange" "Icon" "ti-message-exclamation" "Value" .D.Stats.Alerts "Label" "Active alerts")}}
+  {{template "stat" (dict "Color" "blue" "Icon" "ti-shield-check" "Value" .D.Stats.Watching "Label" "Schedules watching now")}}
+</div>
+
+<div class="row row-cards">
+  {{range .D.Cards}}
+  <div class="col-md-6 col-xl-4">
+    <div class="card{{if and .Active (not .Paused)}} card-watching{{end}}">
+      {{if and .Active (not .Paused)}}<div class="card-status-top bg-primary"></div>{{end}}
+      <div class="card-header">
+        <div class="d-flex align-items-center w-100">
+          {{template "person-avatar" .Person}}
+          <div class="ms-3 me-auto" style="min-width:0">
+            <a href="/people/{{.Person.ID}}" class="card-title text-reset d-block">{{.Person.Name}}</a>
+            <div class="small">{{template "schedule-status" .}}</div>
+          </div>
+          {{template "pause-menu" (dict "Person" .Person "Paused" .Paused "Back" "/")}}
+        </div>
+      </div>
+      {{if .Devices}}
+      <div class="list-group list-group-flush">
+        {{range .Devices}}{{template "device-item" .}}{{end}}
+      </div>
+      {{else}}
+      <div class="card-body text-secondary">
+        No devices yet. <a href="/devices/new?person={{.Person.ID}}">Add {{.Person.Name}}'s phone</a>.
+      </div>
+      {{end}}
+    </div>
+  </div>
+  {{end}}
+
+  {{if .D.Unassigned}}
+  <div class="col-md-6 col-xl-4">
+    <div class="card">
+      <div class="card-header">
+        <span class="avatar bg-secondary-lt"><i class="ti ti-devices"></i></span>
+        <div class="ms-3"><div class="card-title">Other devices</div><div class="small text-secondary">Not assigned to anyone · no alerts</div></div>
+      </div>
+      <div class="list-group list-group-flush">
+        {{range .D.Unassigned}}{{template "device-item" .}}{{end}}
+      </div>
+    </div>
+  </div>
+  {{end}}
+</div>
+
+<div class="row row-cards mt-1">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-timeline me-2"></i>Last 24 hours</h3>
+        <div class="card-actions"><a href="/activity" class="btn btn-sm">More history</a></div>
+      </div>
+      <div class="card-body">
+        {{if .D.RowCount}}
+        <div id="timeline" data-rows="{{.D.RowCount}}"></div>
+        {{template "chart-legend-help" false}}
+        {{else}}
+        <div class="text-secondary">No monitored devices yet.</div>
+        {{end}}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="ti ti-activity me-2"></i>Recent activity</h3>
+        <div class="card-actions"><a href="/activity" class="btn btn-sm">View all</a></div>
+      </div>
+      {{template "events" .D.Events}}
+    </div>
+  </div>
+</div>
+{{end}}
+{{end}}
+
+{{define "stat"}}
+<div class="col-6 col-lg-3">
+  <div class="card card-sm">
+    <div class="card-body">
+      <div class="row align-items-center">
+        <div class="col-auto"><span class="bg-{{.Color}} text-white avatar"><i class="ti {{.Icon}} fs-2"></i></span></div>
+        <div class="col">
+          <div class="h2 mb-0">{{.Value}}</div>
+          <div class="text-secondary small">{{.Label}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+{{if .D.RowCount}}
+<script>
+  Marco.timeline("#timeline", {{.D.Timeline}}, {{.D.From}}, {{.D.To}}, []);
+</script>
+{{end}}
+{{end}}

@@ -1,0 +1,42 @@
+{{define "actions"}}
+<a href="/people/new" class="btn btn-primary"><i class="ti ti-user-plus me-1"></i>Add family member</a>
+{{end}}
+
+{{define "content"}}
+{{if not .D}}
+<div class="empty">
+  <div class="empty-icon"><i class="ti ti-users-group" style="font-size:4rem"></i></div>
+  <p class="empty-title">No family members yet</p>
+  <p class="empty-subtitle text-secondary">Add the people whose devices you want to keep track of.</p>
+  <div class="empty-action"><a href="/people/new" class="btn btn-primary"><i class="ti ti-user-plus me-1"></i>Add a family member</a></div>
+</div>
+{{else}}
+<div class="row row-cards">
+  {{range .D}}
+  <div class="col-md-6 col-lg-4">
+    <a href="/people/{{.Person.ID}}" class="card card-link">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+          <span class="avatar avatar-lg bg-{{.Person.Color}}-lt fw-bold">{{.Person.Initials}}</span>
+          <div class="ms-3">
+            <div class="h3 mb-1">{{.Person.Name}}</div>
+            <div class="small">{{template "schedule-status" .}}</div>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          {{range .Devices}}
+          <span class="badge bg-{{statusColor .Status}}-lt"><i class="ti {{kindIcon .Kind}} me-1"></i>{{.Name}}</span>
+          {{else}}
+          <span class="text-secondary small">No devices yet</span>
+          {{end}}
+        </div>
+        <div class="small text-secondary mt-3">
+          {{len .Person.Schedules}} schedule{{if ne (len .Person.Schedules) 1}}s{{end}}
+        </div>
+      </div>
+    </a>
+  </div>
+  {{end}}
+</div>
+{{end}}
+{{end}}

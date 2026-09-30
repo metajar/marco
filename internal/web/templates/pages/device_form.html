@@ -1,0 +1,78 @@
+{{define "content"}}
+{{$d := .D.Device}}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <form class="card" method="post" action="{{if .D.IsNew}}/devices{{else}}/devices/{{$d.ID}}{{end}}">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-7">
+            <label class="form-label required" for="name">Name</label>
+            <input id="name" name="name" class="form-control" placeholder="e.g. Emma's iPhone" value="{{$d.Name}}" required autofocus>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label" for="person_id">Belongs to</label>
+            <select id="person_id" name="person_id" class="form-select">
+              <option value="0">Nobody (track only, no alerts)</option>
+              {{range .D.People}}<option value="{{.ID}}" {{if eq .ID $d.PersonID}}selected{{end}}>{{.Name}}</option>{{end}}
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">What is it?</label>
+            <div class="form-selectgroup">
+              {{range kinds}}
+              <label class="form-selectgroup-item">
+                <input type="radio" name="kind" value="{{.Value}}" class="form-selectgroup-input" {{if eq .Value $d.Kind}}checked{{end}}>
+                <span class="form-selectgroup-label"><i class="ti {{.Icon}} me-1"></i>{{.Label}}</span>
+              </label>
+              {{end}}
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label required" for="ip">IP address</label>
+            <input id="ip" name="ip" class="form-control font-monospace" placeholder="192.168.1.42" value="{{$d.IP}}" required inputmode="decimal">
+            <div class="form-hint">Tip: reserve this address for the phone in your router's DHCP settings so it never changes.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="mac">MAC address</label>
+            <input id="mac" name="mac" class="form-control font-monospace" placeholder="Learned automatically" value="{{$d.MAC}}">
+            <div class="form-hint">Lets Marco follow the device if its IP changes. Filled in automatically after the first successful check.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="monitored" value="1" {{if $d.Monitored}}checked{{end}}>
+              <span class="form-check-label">Monitor this device</span>
+              <span class="form-check-description">Check whether it's on the network and keep history.</span>
+            </label>
+            <label class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="alerts" value="1" {{if $d.Alerts}}checked{{end}}>
+              <span class="form-check-label">Send alerts</span>
+              <span class="form-check-description">Text parents when it leaves the Wi-Fi during the owner's schedule. Turn off for devices you just want to chart (like a laptop).</span>
+            </label>
+          </div>
+
+          <div class="col-12">
+            <a class="small" data-bs-toggle="collapse" href="#advanced" role="button"><i class="ti ti-adjustments me-1"></i>Advanced</a>
+            <div class="collapse {{if $d.Ports}}show{{end}}" id="advanced">
+              <label class="form-label mt-2" for="ports">TCP ports to probe</label>
+              <input id="ports" name="ports" class="form-control font-monospace" placeholder="Use the defaults from Settings" value="{{$d.Ports}}">
+              <div class="form-hint">Comma separated. A closed port still proves the device is there, so you rarely need to change this.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer d-flex">
+        <a href="{{if .D.IsNew}}/devices{{else}}/devices/{{$d.ID}}{{end}}" class="btn btn-link">Cancel</a>
+        <button type="submit" class="btn btn-primary ms-auto">{{if .D.IsNew}}Add device{{else}}Save{{end}}</button>
+      </div>
+    </form>
+    {{if not .D.IsNew}}
+    <form method="post" action="/devices/{{$d.ID}}/delete" class="mt-3" data-confirm="Remove {{$d.Name}} and all of its history?">
+      <button class="btn btn-ghost-danger"><i class="ti ti-trash me-1"></i>Remove device</button>
+    </form>
+    {{end}}
+  </div>
+</div>
+{{end}}

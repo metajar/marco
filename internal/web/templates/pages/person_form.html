@@ -1,0 +1,15 @@
+{{define "content"}}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <form class="card" method="post" action="/people">
+      <div class="card-body">
+        {{template "person-fields" .D}}
+      </div>
+      <div class="card-footer d-flex">
+        <a href="/people" class="btn btn-link">Cancel</a>
+        <button type="submit" class="btn btn-primary ms-auto">Add family member</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{end}}

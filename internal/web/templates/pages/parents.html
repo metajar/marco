@@ -1,0 +1,41 @@
+{{define "content"}}
+<div class="row row-cards">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Parent accounts</h3></div>
+      <div class="list-group list-group-flush">
+        {{range .D}}
+        <div class="list-group-item">
+          <div class="row align-items-center g-3">
+            <div class="col-auto"><span class="avatar bg-primary-lt">{{printf "%.1s" .Name}}</span></div>
+            <div class="col text-truncate">
+              <div class="fw-medium">{{.Name}}{{if eq .ID $.User.ID}} <span class="badge bg-secondary-lt ms-1">you</span>{{end}}</div>
+              <div class="small text-secondary">@{{.Username}}{{if .Phone}} · {{.Phone}}{{end}}</div>
+            </div>
+            <div class="col-auto">
+              {{if and .Notify .Phone}}<span class="badge bg-green-lt"><i class="ti ti-message me-1"></i>Gets texts</span>
+              {{else}}<span class="badge bg-secondary-lt"><i class="ti ti-message-off me-1"></i>No texts</span>{{end}}
+            </div>
+            <div class="col-auto"><a href="/parents/{{.ID}}" class="btn btn-sm btn-ghost-secondary"><i class="ti ti-edit"></i></a></div>
+          </div>
+        </div>
+        {{end}}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <form class="card" method="post" action="/parents">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title"><i class="ti ti-user-plus me-2"></i>Add a parent</h3>
+          <div class="card-subtitle">They can sign in and change everything you can.</div>
+        </div>
+      </div>
+      <div class="card-body">
+        {{template "parent-fields" (dict "Admin" nil "New" true)}}
+      </div>
+      <div class="card-footer"><button class="btn btn-primary w-100">Add parent</button></div>
+    </form>
+  </div>
+</div>
+{{end}}
